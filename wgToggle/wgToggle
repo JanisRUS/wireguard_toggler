@@ -1,0 +1,49 @@
+#!/bin/bash
+
+LOG_FILE="/home/$USER/.wgToggle/wgToggle.log"
+TIME="$(date +%s)"
+
+echo "[$TIME] Click registered!" >> "$LOG_FILE"
+
+INTERFACE_NAME="$(cat "/home/$USER/.wgToggle/interface")"
+if [ -z "$INTERFACE_NAME" ]
+then
+    echo "No wireguard confs were found!" >> "$LOG_FILE"
+    exit 1
+fi
+
+
+ICONS_DIR="/home/$USER/.local/share/icons"
+APP_DIR="/home/$USER/.local/share/applications"
+ip -br a | grep -oq "$INTERFACE_NAME"
+if [ $? == 0 ]
+then
+    echo "[$TIME] $INTERFACE_NAME up --> down" >> "$LOG_FILE"
+    wg-quick down "$INTERFACE_NAME" >> "$LOG_FILE" 2>&1
+    if [ $? == 0 ]
+    then
+        sed -i 's|^Icon=.*|Icon='"$ICONS_DIR/WG_DIS.ico"'|' "$APP_DIR/wgToggle.desktop"
+        echo "[$TIME] Done!" >> "$LOG_FILE"
+        notify-send "VPN $INTERFACE_NAME is down!" -i "$ICONS_DIR/WG_DIS.ico"
+    else
+        echo "[$TIME] Error!" >> "$LOG_FILE"
+        notify-send "Failed to down VPN $INTERFACE_NAME!" -i "$ICONS_DIR/WG_ERR.ico"
+    fi
+else
+    echo "[$TIME] $INTERFACE_NAME down --> up" >> "$LOG_FILE"
+    wg-quick up "$INTERFACE_NAME" >> "$LOG_FILE" 2>&1
+    if [ $? == 0 ]
+    then
+        sed -i 's|^Icon=.*|Icon='"$ICONS_DIR/WG_CON.ico"'|' "$APP_DIR/wgToggle.desktop"
+        echo "[$TIME] Done!" >> "$LOG_FILE"
+        notify-send "VPN $INTERFACE_NAME is up!" -i "$ICONS_DIR/WG_CON.ico"
+    else
+        echo "[$TIME] Error!" >> "$LOG_FILE"
+        notify-send "Failed to up VPN $INTERFACE_NAME!" -i "$ICONS_DIR/WG_ERR.ico"
+    fi
+fi
+
+gtk-update-icon-cache -f "$ICONS_DIR/"
+update-desktop-database "$APP_DIR/"
+
+exit 0

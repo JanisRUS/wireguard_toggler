@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Wireguard toggler
+Exec=wgToggle
+Icon=wgToggleIcon.ico
+Terminal=false
+Categories=Network;
